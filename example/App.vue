@@ -3,11 +3,11 @@
     <img alt="Vue logo" src="./assets/logo.png">
     <!-- <HelloWorld msg="Welcome to Your Vue.js App"/> -->
     <h1>Vue-Virtual-List</h1>
-    <VirtualList :data-source="list" :height="240" :item-height="50">
+    <virtual-list :data-source="list" :height="240" :item-height="50">
       <template scope="{ data }">
         <div class="virtual-list-item__cell">{{ data && data.content }} ,</div>
       </template>
-    </VirtualList>
+    </virtual-list>
 
     <table-tree
       class="tree-table-view"
