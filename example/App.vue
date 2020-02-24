@@ -1,125 +1,158 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <!-- <HelloWorld msg="Welcome to Your Vue.js App"/> -->
-    <h1>Vue-Virtual-List</h1>
-    <virtual-list :data-source="list" :height="240" :item-height="50">
+    <!-- <img alt="Vue logo" src="./assets/logo.png" /> -->
+
+    <VirtualTable
+      ref="$table"
+      row-key="id"
+      bordered
+      use-virtual
+      :overscan-count="1"
+      :scroll="scroll"
+      :columns="columns"
+      :data-source="dataSource"
+      :row-height="54"
+      :indent-size="20"
+      :row-selection="{ type: 'radio', selectedRowKeys: [] }"
+    />
+    <!-- <h1 style="margin-top: 3em">Vue-Virtual-List</h1> -->
+
+    <button @click="testUpdateDataSource">Update Data Source</button>
+
+    <virtual-list :data-source="data" :height="240" :item-height="50">
       <template scope="{ data }">
-        <div class="virtual-list-item__cell">{{ data && data.content }} ,</div>
+        <div class="virtual-list-item__cell">{{data.content}}</div>
       </template>
     </virtual-list>
-
-    <table-tree
-      class="tree-table-view"
-      :row-key="rowKey"
-      :show-header="true"
-      :data-source="data"
-      :columns="columns1"
-      :indent-size="20"
-      :expand="true"
-      :depth="0"
-      :expand-depth="1"
-      :expand-row-map.sync="expandRowMap"
-    />
   </div>
 </template>
 
 <script>
 // import HelloWorld from './components/HelloWorld.vue'
-import VirtualList from "@";
-import TableTree from "./components/TableTree";
-import dataSource, { TableData2, tree } from "./TreeData";
+import VirtualList from '@'
+import dataSource from './TreeData'
+import VirtualTable from '@/virtual-table'
+import TableRowExpansionItem from './components/TableRowExpansionItem/index'
+// import VirtualTable1 from '@/VirtualTable/demo/Table'
+
+let i = 0
+let list = []
+for (let i = 0; i < 10000; i++) {
+  list.push({
+    key: i + 1,
+    index: 0,
+    content: `Yes, i am ${i + 1}th element`
+  })
+}
 
 export default {
-  name: "app",
+  name: 'app',
   components: {
     // HelloWorld,
     VirtualList,
-    TableTree
+    VirtualTable
+    // VirtualTable1
   },
-  data() {
-    let list = [];
-    for (let i = 0; i < 10000; i++) {
-      list.push({
-        key: i + 1,
-        index: 0,
-        content: `Yes, i am ${i + 1}th element`
-      });
+
+  methods: {
+    testUpdateDataSource() {
+      console.log('this.i: ', i)
+      const start = 100 * i++
+      const end = start + 100
+      console.log('start: ', start, 'end: ', end)
+
+      this.data = list.slice(start, end)
     }
+  },
 
+  data() {
     return {
+      scroll: { x: 1400, y: 300 },
       list,
-      data: dataSource,
-      columns1: [
+      dataSource,
+      data: list.slice(0, 100),
+      columns: [
         {
-          prop: "index",
+          fixed: true,
+          label: 'Expander',
           key: 0,
-          minWidth: 20,
-          render(h, { rowIndex }) {
-            return ++rowIndex;
-          }
-        },
-        {
-          prop: "_expand",
-          key: 0,
-          width: 20,
-          minWidth: 40,
-          render: (h, { store, row, /* column, */ depth }) => {
+          width: 100,
+          render(h, { row, store }) {
             if (row.children && row.children.length) {
-              const expanded = store.isRowExpanded(row);
-              const classname = expanded ? "el-icon-minus" : "el-icon-plus";
-
               return (
-                <i
-                  style={`padding-left: ${depth * 20}px`}
-                  class={classname}
-                  onClick={() => store.toggleRowExpansion(row)}
-                >
-                  {expanded ? "-" : "+"}
-                </i>
-              );
-            } else {
-              return (
-                <input
-                  type="checkbox"
-                  style={`padding-left: ${depth * 20}px`}
+                <TableRowExpansionItem
+                  indent-size={store.indentSize}
+                  store={store}
+                  row={row}
+                  depth={row.__depth || row.__tree.depth}
                 />
-              );
+              )
             }
           }
         },
         {
-          label: "商品 ID",
-          prop: "id",
-          key: 1
+          fixed: true,
+          label: '商品 ID',
+          prop: 'id',
+          key: 1,
+          width: 100
         },
         {
-          label: "商品名称",
-          prop: "name",
-          key: 2
+          label: '商品名称',
+          prop: 'name',
+          key: 2,
+          width: 200
         },
         {
-          label: "描述",
-          prop: "desc",
+          label: '描述',
+          prop: 'desc',
+          width: 300,
           key: 3
+        },
+        {
+          label: '商家地址',
+          prop: 'address',
+          width: 400,
+          key: 4
+        },
+        {
+          // fixed: 'right',
+          label: '小吃分类',
+          prop: 'category',
+          width: 300,
+          key: 5
         }
       ]
-    };
+    }
   }
-};
+}
 </script>
 
 <style>
+body {
+  background-color: #eee;
+}
+
 #app {
-  font-family: "Avenir", Helvetica, Arial, sans-serif;
+  font-family: 'Avenir', Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
 }
 
-.cell {
-  line-height: 50px;
+table {
+  border-collapse: collapse;
+}
+
+th {
+  text-align: inherit;
+}
+
+*,
+*::before,
+*::after {
+  -webkit-box-sizing: border-box;
+  box-sizing: border-box;
 }
 </style>

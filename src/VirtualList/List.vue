@@ -25,7 +25,7 @@
             class="virtual-list-item"
             v-for="({ data, $top }, index) in pool"
             :tag="itemTag"
-            :key="index + 1"
+            :key="data.key || index + 1"
             :item="data"
             :style="{ transform: `translateY(${$top}px)`}"
           >
@@ -43,10 +43,10 @@
 </template>
 
 <script>
-import PropTypes from "vue-types";
-import VirtualListItem from "./ListItem";
+import PropTypes from 'vue-types'
+import VirtualListItem from './ListItem'
 
-const name = "VirtualList";
+const name = 'VirtualList'
 const VirtualScroller = {
   name,
   components: { VirtualListItem },
@@ -58,40 +58,37 @@ const VirtualScroller = {
     itemTag: PropTypes.string.def('div'),
     expandable: PropTypes.bool.def(false),
     height: PropTypes.oneOfType([PropTypes.number, PropTypes.string]).def(
-      "100%"
+      '100%'
     )
   },
   computed: {
     totalSize() {
-      return this.dataSource.length;
+      return this.dataSource.length
     },
     totalHeight() {
-      return this.totalSize * this.itemHeight;
+      return this.totalSize * this.itemHeight
     },
     maxIndex() {
-      return this.totalSize - this.poolSize;
+      return this.totalSize - this.poolSize
     },
     poolSize() {
-      return (
-        this.prerender +
-        Math.ceil(this.wrapperHeight / this.itemHeight)
-      );
+      return this.prerender + Math.ceil(this.wrapperHeight / this.itemHeight)
     },
     wrapper() {
-      return this.$refs.wrapper;
+      return this.$refs.wrapper
     },
     wrapperHeight() {
-      return this.height || this.wrapper.clientHeight;
+      return this.height || this.wrapper.clientHeight
     }
   },
   watch: {
     /* the total data length */
     dataSource: {
       handler(value) {
-        this.$_isSameDataRef = value === this.dataSource;
+        console.log('value: ', value && value[0] && value[0].key)
         this.$nextTick(() => {
-          this.updatePool();
-        });
+          this.updatePool()
+        })
       }
     }
   },
@@ -99,131 +96,131 @@ const VirtualScroller = {
     return {
       pool: [], // PoolModel
       startIndex: -1
-    };
+    }
   },
   beforeCreate() {
-    console.time("time-for-created");
+    console.time('time-for-created')
   },
   created() {
-    console.timeEnd("time-for-created");
-    const { height, itemHeight, totalHeight } = this;
+    console.timeEnd('time-for-created')
+    const { height, itemHeight, totalHeight } = this
 
     this.itemStyle = {
-      width: "100%",
-      height: itemHeight + "px"
-    };
+      width: '100%',
+      height: itemHeight + 'px'
+    }
 
     if (this.height) {
       this.wrapperStyle = {
-        height: height + (typeof height === "number" ? "px" : "")
-      };
+        height: height + (typeof height === 'number' ? 'px' : '')
+      }
     }
 
     this.scrollerStyle = {
-      position: "relative",
-      width: "auto",
-      height: totalHeight + "px",
-      maxHeight: totalHeight + "px",
-      overflow: "hidden"
-    };
+      position: 'relative',
+      width: 'auto',
+      height: totalHeight + 'px',
+      maxHeight: totalHeight + 'px',
+      overflow: 'hidden'
+    }
   },
   beforeMount() {
-    console.time("time-for-mounted");
+    console.time('time-for-mounted')
   },
   mounted() {
-    console.timeEnd("time-for-mounted");
-    this.$_ready = true;
-    this.$nextTick(this.updatePool);
+    console.timeEnd('time-for-mounted')
+    this.$_ready = true
+    this.$nextTick(this.updatePool)
   },
   beforeUpdate() {
-    console.time("time-for-updated");
+    console.time('time-for-updated')
   },
   updated() {
-    console.timeEnd("time-for-updated");
+    console.timeEnd('time-for-updated')
   },
   destroyed() {
-    this.$_requestId && cancelAnimationFrame(this.$_requestId);
+    this.$_requestId && cancelAnimationFrame(this.$_requestId)
   },
   methods: {
     handleScroll() {
-      this.$_digesting = true;
+      this.$_digesting = true
       this.$_requestId = requestAnimationFrame(() => {
-        this.$_digesting = false;
-        this.updatePool();
-      });
+        this.$_digesting = false
+        this.updatePool()
+      })
     },
 
     updatePool() {
-      if (this.$_digesting || !this.$_ready) return;
-      this.$_digesting = true;
+      if (this.$_digesting || !this.$_ready) return
+      this.$_digesting = true
 
-      const { wrapper, itemHeight, maxIndex, poolSize } = this;
-      const currentIndex = Math.floor(wrapper.scrollTop / itemHeight);
-      const startIndex = Math.min(maxIndex, currentIndex);
-      this.startIndex = startIndex;
+      const { wrapper, itemHeight, maxIndex, poolSize } = this
+      const currentIndex = Math.floor(wrapper.scrollTop / itemHeight)
+      const startIndex = Math.min(maxIndex, currentIndex)
+      this.startIndex = startIndex
       /* 当前列表的索引发生实际变化时才进行切片触发更新 */
-      const shouldUpdate = this.$_prevStartIndex !== startIndex;
+      const shouldUpdate = this.$_prevStartIndex !== startIndex
 
-      if (!shouldUpdate) return;
+      if (!shouldUpdate) return
 
       /* 获取滚动方向和差值，优化滚动性能和复用DOM */
-      const scrollGap = startIndex - this.$_prevStartIndex || 0;
-      const endIndex = startIndex + poolSize; /*  - 1 */
+      const scrollGap = startIndex - this.$_prevStartIndex || 0
+      const endIndex = startIndex + poolSize /*  - 1 */
 
       // update reactive property `pool`
-      this.genePoolModel(startIndex, endIndex, scrollGap);
+      this.genePoolModel(startIndex, endIndex, scrollGap)
 
       // reset local flags
-      this.$_prevStartIndex = startIndex;
-      this.$_digesting = false;
-      this.$_requestId && cancelAnimationFrame(this.$_requestId);
+      this.$_prevStartIndex = startIndex
+      this.$_digesting = false
+      this.$_requestId && cancelAnimationFrame(this.$_requestId)
     },
 
     genePoolModel(startIndex, endIndex, direction) {
-      const { dataSource, itemHeight, pool, $_isSameDataRef } = this;
+      const { dataSource, itemHeight, pool, $_isSameDataRef } = this
 
       if (!pool.length || !$_isSameDataRef) {
         // reset flag
-        this.$_isSameDataRef = true;
+        this.$_isSameDataRef = true
 
         return (this.pool = dataSource
           .slice(startIndex, endIndex)
-          .map(item => ({
+          .map((item) => ({
             data: item,
             $top: startIndex * itemHeight,
             $pos: startIndex++
-          })));
+          })))
       }
 
       const newIndexes = new Array(endIndex - startIndex)
         .fill(startIndex)
-        .map((i, d) => i + d);
+        .map((i, d) => i + d)
       const diffIndexes = pool.reduce((acc, cur, idx) => {
         if (!newIndexes.includes(cur.$pos)) {
-          acc[acc.length] = idx;
+          acc[acc.length] = idx
         }
 
-        return acc;
-      }, []);
+        return acc
+      }, [])
       let newIndex =
         direction > 0
           ? endIndex - diffIndexes.length /* down */
-          : startIndex; /* up */
+          : startIndex /* up */
 
-      diffIndexes.forEach(index => {
-        const item = pool[index];
+      diffIndexes.forEach((index) => {
+        const item = pool[index]
 
-        item.data = dataSource[newIndex]; /* update data by new index */
-        item.$top = newIndex * itemHeight;
-        item.$pos = newIndex++;
-      });
+        item.data = dataSource[newIndex] /* update data by new index */
+        item.$top = newIndex * itemHeight
+        item.$pos = newIndex++
+      })
 
-      return dataSource;
+      return dataSource
     }
   }
-};
+}
 
-export default VirtualScroller;
+export default VirtualScroller
 </script>
 
 <style lang="css">
